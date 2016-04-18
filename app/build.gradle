@@ -1,0 +1,66 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion '22.0.1'
+    defaultConfig {
+        applicationId "com.udacity.gradle.builditbigger"
+        minSdkVersion 10
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled = true
+        testInstrumentationRunner "com.android.test.runner.MultiDexTestRunner"
+    }
+
+    productFlavors {
+        free {
+            applicationId "com.udacity.gradle.builditbigger.free"
+        }
+        paid {
+            applicationId "com.udacity.gradle.builditbigger.paid"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        shrink{
+            minifyEnabled true
+            shrinkResources true
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    // Added for AdMob
+    testCompile 'junit:junit:4.12'
+    compile project(':androidjokelibrary')
+    compile project(path: ':backend', configuration: 'android-endpoints')
+    compile 'com.android.support:appcompat-v7:23.1.1'
+    freeCompile 'com.google.android.gms:play-services:8.3.0'
+    freeCompile 'com.google.android.gms:play-services-ads:8.3.0'
+}
+
+task MyTaskStartEngine (dependsOn: ":backend:appengineRun") {
+
+    project(":backend").afterEvaluate { backend ->
+        backend.extensions.appengine.daemon = true
+    }
+    doLast {
+        println "!!! started the server !!!"
+    }
+}
+
+MyTaskStartEngine.finalizedBy "MyStartTest"
+
+task MyStartTest(dependsOn: ":app:connectedAndroidTest"){
+    doFirst{
+        println '!!! Start TEST !!!'
+    }
+}
+
+MyStartTest.finalizedBy(":backend:appengineStop")
